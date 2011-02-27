@@ -13,7 +13,7 @@ use IO::Handle;
 use AnyEvent::Serialize qw(:all);
 use AnyEvent::Tools qw(mutex);
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 sub new
 {

@@ -3,4 +3,6 @@ Revision history for Perl extension AnyEvent::ForkObject.
 0.01  Fri Feb 25 10:59:06 2011
 	- original version; created by h2xs 1.23 with options
 		-Xn AnyEvent::ForkObject
-
+0.02  Mon Feb 28 00:00:21 MSK 2011
+        - fixed MANIFEST
+        - added debian infrastructure

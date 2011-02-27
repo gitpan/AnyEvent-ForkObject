@@ -1,7 +1,12 @@
-Changes
-Makefile.PL
-MANIFEST
 README
-t/AnyEvent-ForkObject.t
+Makefile.PL
+t/01_fo.t
+debian/changelog
+debian/compat
+debian/copyright
+debian/rules
+debian/control
+MANIFEST
+Changes
 lib/AnyEvent/ForkObject.pm
 META.yml                                 Module meta-data (added by MakeMaker)

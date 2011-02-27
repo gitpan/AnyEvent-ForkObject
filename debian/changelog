@@ -1,0 +1,5 @@
+libanyevent-forkobject-perl (0.02-1) unstable; urgency=low
+
+  * Initial release. (Closes: #XXXXXX)
+
+ -- Dmitry E. Oboukhov <unera@debian.org>  Sun, 27 Feb 2011 23:55:12 +0300

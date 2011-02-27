@@ -1,0 +1,7 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+t/AnyEvent-ForkObject.t
+lib/AnyEvent/ForkObject.pm
+META.yml                                 Module meta-data (added by MakeMaker)

@@ -6,3 +6,6 @@ Revision history for Perl extension AnyEvent::ForkObject.
 0.02  Mon Feb 28 00:00:21 MSK 2011
         - fixed MANIFEST
         - added debian infrastructure
+
+0.04  Mon Feb 28 00:40:44 MSK 2011
+        - clean zombies.

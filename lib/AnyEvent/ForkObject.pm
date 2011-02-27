@@ -5,6 +5,7 @@ use strict;
 use warnings;
 
 use Carp;
+use AnyEvent;
 use AnyEvent::Util;
 use AnyEvent::Handle;
 use Scalar::Util qw(weaken blessed reftype);
@@ -13,7 +14,7 @@ use IO::Handle;
 use AnyEvent::Serialize qw(:all);
 use AnyEvent::Tools qw(mutex);
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 sub new
 {
@@ -27,7 +28,6 @@ sub new
         close $s2;
         fh_nonblocking $s1, 1;
         $self->{handle} = new AnyEvent::Handle fh => $s1;
-        weaken $self->{handle}{on_error};
     } elsif (defined $self->{pid}) {
         # child
         close $s1;
@@ -262,6 +262,13 @@ sub DESTROY
     my ($self) = @_;
     $self->{handle}->push_write("'bye'\n") if $self->{handle};
     delete $self->{handle};
+
+    # kill zombies
+    my $cw;
+    $cw = AE::child $self->{pid} => sub {
+        my ($pid, $code) = @_;
+        undef $cw;
+    };
 }
 
 package AnyEvent::ForkObject::OneObject;

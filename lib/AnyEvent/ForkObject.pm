@@ -13,7 +13,7 @@ use IO::Handle;
 use AnyEvent::Serialize qw(:all);
 use AnyEvent::Tools qw(mutex);
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 sub new
 {
@@ -341,7 +341,7 @@ AnyEvent::ForkObject - Async access on objects.
             my ($status, $dbh) = @_;
 
 
-            $dbh->do('SELECT ?', undef, 1 + 1, sub {
+            $dbh->selectrow_array('SELECT ?', undef, 1 + 1, sub {
                 my ($status, $result) = @_;
                 print "$result\n";   # prints 2
             });
@@ -406,7 +406,7 @@ by the method.
 
 =back
 
-If L<method> returns blessed object, it will provide all its methods in
+If L</method> returns blessed object, it will provide all its methods in
 modified form. Each method will receive one or two additional arguments:
 
 =over
@@ -432,5 +432,10 @@ Copyright (C) 2011 by Dmitry E. Oboukhov
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.1 or,
 at your option, any later version of Perl 5 you may have available.
+
+=head1 VCS
+
+The project is placed in my git repo:
+L<http://git.uvw.ru/?p=anyevent-forkobject;a=summary>
 
 =cut

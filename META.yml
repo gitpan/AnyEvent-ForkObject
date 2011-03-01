@@ -1,6 +1,6 @@
 --- #YAML:1.0
 name:               AnyEvent-ForkObject
-version:            0.04
+version:            0.05
 abstract:           Async access on objects.
 author:
     - Dmitry E. Oboukhov <unera@debian.org>
@@ -13,6 +13,7 @@ build_requires:
 requires:
     AnyEvent::Serialize:  0.03
     AnyEvent::Tools:      0.10
+    Devel::GlobalDestruction:  0.02
 no_index:
     directory:
         - t

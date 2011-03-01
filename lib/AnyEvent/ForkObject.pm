@@ -13,8 +13,10 @@ use POSIX;
 use IO::Handle;
 use AnyEvent::Serialize qw(:all);
 use AnyEvent::Tools qw(mutex);
+use Devel::GlobalDestruction;
 
-our $VERSION = '0.04';
+
+our $VERSION = '0.05';
 
 sub new
 {
@@ -263,6 +265,8 @@ sub DESTROY
     $self->{handle}->push_write("'bye'\n") if $self->{handle};
     delete $self->{handle};
 
+    return if in_global_destruction;
+
     # kill zombies
     my $cw;
     $cw = AE::child $self->{pid} => sub {
@@ -355,6 +359,29 @@ AnyEvent::ForkObject - Async access on objects.
         }
     );
 
+
+    use AnyEvent::Tools qw(async_repeat);
+
+    $dbh->prepare('SELECT * FROM tbl', sub {
+        my ($status, $sth) = @_;
+        $sth->execute(sub {
+            my ($status, $rv) = @_;
+
+            # fetch 30 rows
+            async_repeat 30 => sub {
+                my ($guard) = @_;
+
+                $sth->fetchrow_hashref(sub {
+                    my ($status, $row) = @_;
+                    undef $guard;
+
+                    # do something with $row
+                });
+            };
+
+        });
+    });
+
 =head1 DESCRIPTION
 
 There are a lot of modules that provide object interface. Using the module
@@ -427,6 +454,15 @@ A callback that will be called after method has done.
 Context flag for method. Default value is B<0> (SCALAR).
 
 =back
+
+All objects provide additional method B<fo_attr> to access their field.
+Example:
+
+    # set attribute
+    $dbh->fo_attr(RaiseError => 1, sub { my ($status, $attr) = @_; ... });
+
+    # get attribute
+    $dbh->fo_attr('RaiseError', sub { my ($status, $attr) = @_; ... });
 
 =head1 AUTHOR
 

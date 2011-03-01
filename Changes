@@ -9,3 +9,7 @@ Revision history for Perl extension AnyEvent::ForkObject.
 
 0.04  Mon Feb 28 00:40:44 MSK 2011
         - clean zombies.
+
+0.05  Tue Mar  1 10:14:18 MSK 2011
+        - perldoc
+        - separate global and usual destructor to avoid EV crash

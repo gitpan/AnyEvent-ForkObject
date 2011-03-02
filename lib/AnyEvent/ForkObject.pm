@@ -16,7 +16,7 @@ use AnyEvent::Tools qw(mutex);
 use Devel::GlobalDestruction;
 
 
-our $VERSION = '0.05';
+our $VERSION = '0.06';
 
 sub new
 {
@@ -29,7 +29,18 @@ sub new
         # parent
         close $s2;
         fh_nonblocking $s1, 1;
-        $self->{handle} = new AnyEvent::Handle fh => $s1;
+        {
+            weaken(my $self = $self);
+            $self->{handle} = new AnyEvent::Handle
+                fh => $s1,
+                on_error => sub {
+                    return unless $self;
+                    return if $self->{destroyed};
+                    delete $self->{handle};
+                    $self->{fatal} = $!;
+                    $self->{cb}(fatal => $self->{fatal}) if $self->{cb};
+                };
+        }
     } elsif (defined $self->{pid}) {
         # child
         close $s1;
@@ -55,27 +66,25 @@ sub do :method
     my $require = $opts{require};
     $wantarray = 0 unless exists $opts{wantarray};
 
-
+    weaken $self;
     $self->{mutex}->lock(sub {
         my ($guard) = @_;
+        return unless $self;
+        return if $self->{destroyed};
+
+        $self->{cb} = $cb;
 
         unless ($self->{handle}) {
             $cb->(fatal => 'Child process was destroyed');
+            undef $guard;
             return;
         }
 
         if ($self->{fatal}) {
             $cb->(fatal => $self->{fatal});
-            $self->{handle}->on_error(undef) if $self->{handle};
-        }
-
-        $self->{handle}->on_error(sub {
-            $self->{fatal} = $!;
-            $cb->(fatal => $!);
-            delete $self->{handle};
             undef $guard;
-        });
-
+            return;
+        }
 
         serialize {
                 $require ? (r => $require) : (
@@ -85,16 +94,17 @@ sub do :method
                     wa  => $wantarray
                 )
             } => sub {
+                return unless $self;
                 goto CHILD_DESTROYED unless $self->{handle};
                 $self->{handle}->push_write("$_[0]\n");
                 goto CHILD_DESTROYED unless $self->{handle};
                 $self->{handle}->push_read(line => "\n", sub {
                     deserialize $_[1] => sub {
+                        return unless $self;
                         my ($o, $error, $tail) = @_;
 
                         if ($error) {
                             $cb->(fatal => $error);
-                            $self->{handle}->on_error(undef) if $self->{handle};
                             undef $guard;
                             return;
                         }
@@ -107,7 +117,6 @@ sub do :method
                                         no => "$_->{obj}",
                                         fo => \$self,
                                     } => 'AnyEvent::ForkObject::OneObject';
-                                    weaken $self;
                                     next;
                                 }
 
@@ -117,7 +126,7 @@ sub do :method
                         } else {
                             $cb->($status => @$o);
                         }
-                        $self->{handle}->on_error(undef) if $self->{handle};
+                        delete $self->{cb};
                         undef $guard;
                     };
                     return;
@@ -134,6 +143,23 @@ sub do :method
     return;
 }
 
+
+sub DESTROY
+{
+    my ($self) = @_;
+    $self->{destroyed} = 1;
+    $self->{handle}->push_write("'bye'\n") if $self->{handle};
+    delete $self->{handle};
+
+    return if in_global_destruction;
+
+    # kill zombies
+    my $cw;
+    $cw = AE::child $self->{pid} => sub {
+        my ($pid, $code) = @_;
+        undef $cw;
+    };
+}
 
 sub _start_server
 {
@@ -255,24 +281,11 @@ sub _start_server
             print $socket "\n";
     }
 
+    # destroy internal objects
+    delete $self->{object};
+
     # we don't want to call any other destructors
     POSIX::_exit($err_code);
-}
-
-sub DESTROY
-{
-    my ($self) = @_;
-    $self->{handle}->push_write("'bye'\n") if $self->{handle};
-    delete $self->{handle};
-
-    return if in_global_destruction;
-
-    # kill zombies
-    my $cw;
-    $cw = AE::child $self->{pid} => sub {
-        my ($pid, $code) = @_;
-        undef $cw;
-    };
 }
 
 package AnyEvent::ForkObject::OneObject;

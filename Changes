@@ -13,3 +13,6 @@ Revision history for Perl extension AnyEvent::ForkObject.
 0.05  Tue Mar  1 10:14:18 MSK 2011
         - perldoc
         - separate global and usual destructor to avoid EV crash
+
+0.06  Wed Mar  2 14:24:59 MSK 2011
+        - destructors work properly

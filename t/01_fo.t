@@ -6,7 +6,7 @@ use utf8;
 use open qw(:std :utf8);
 use lib qw(lib ../lib);
 
-use Test::More tests    => 34;
+use Test::More tests    => 39;
 use Encode qw(decode encode);
 
 BEGIN {
@@ -26,14 +26,18 @@ BEGIN {
 
     ok $obj, "Constructor";
 
+    my $phase = 0;
+
     $obj->do(require => 'Data::Dumper', cb => sub {
-        ok $_[0] eq 'ok', 'require Data::Dumper';
+        $phase++;
+        diag explain \@_ unless ok $_[0] eq 'ok', 'require Data::Dumper';
         $obj->do(
             module => 'Data::Dumper',
             args => [ [ 1, 2, 3 ]],
             cb => sub {
                 my ($s, $o) = @_;
-                ok $s eq 'ok', 'Data::Dumper created';
+                diag explain \@_ unless ok $s eq 'ok', 'Data::Dumper created';
+                $phase++;
 
                 $o->Indent(0, sub { ok $_[0] eq 'ok', 'dumper->Indent(0)' });
                 $o->Terse(1,  sub { ok $_[0] eq 'ok', 'dumper->Terse(1)'  });
@@ -45,6 +49,7 @@ BEGIN {
                 $o->Dump(sub {
                     my ($st, $ob) = @_;
                     undef $o;
+                    $phase++;
                     ok $st eq 'ok', 'Dump has done';
                     ok $ob eq '123', 'Result is right';
 
@@ -53,13 +58,15 @@ BEGIN {
     });
 
     $obj->do(require => 'File::Spec', cb => sub {
-        ok $_[0] eq 'ok', 'require File::Spec';
+        diag explain \@_ unless ok $_[0] eq 'ok', 'require File::Spec';
+        $phase++;
         $obj->do(
             module  => 'File::Spec',
             method  => 'catfile',
             args    => [ '/etc', 'passwd' ],
             cb      => sub {
                 my ($s, $o) = @_;
+                $phase++;
                 ok $s eq 'ok', 'File::Spec->catfile has done';
                 ok $o eq '/etc/passwd', 'File::Spec->catfile works properly';
             }
@@ -67,9 +74,17 @@ BEGIN {
     });
 
 
-    my $timer = AE::timer 0.5, 0 => sub { undef $obj; $cv->send };
+    my $timer = AE::timer 0.01, 0.01 => sub {
+        return if $phase < 5;
+        undef $obj; $cv->send
+    };
+
+    my $timeout; $timeout =
+        AE::timer 2, 0 => sub { undef $obj; undef $timeout; $cv->send  };
 
     $cv->recv;
+
+    ok $timeout, "Timeout wasn't reached";
 }
 
 {
@@ -79,7 +94,7 @@ BEGIN {
     ok $obj, "Constructor";
 
     $obj->do(require => 'Data::Dumper', cb => sub {
-        ok $_[0] eq 'ok', 'require Data::Dumper';
+        diag explain \@_ unless ok $_[0] eq 'ok', 'require Data::Dumper';
         $obj->do(
             module => 'Data::Dumper',
             args => [ [ 1, 2, 3 ]],
@@ -93,15 +108,44 @@ BEGIN {
                 $o->Dump(0, sub {
                     my ($st, $ob) = @_;
                     ok $st eq 'fatal', 'Object has been destroyed';
-                    ok $ob =~ /destroyed/, 'Result is right';
+                    ok $ob =~ /destroyed/, 'Fatal message is right';
 
                 });
             });
     });
 
-    my $timer = AE::timer 0.5, 0 => sub {  $cv->send };
+    my $timer = AE::timer 1, 0 => sub {  $cv->send };
 
     $cv->recv;
+}
+
+{
+    my $cv = condvar AnyEvent;
+    my $obj = new AnyEvent::ForkObject;
+    my $obj2 = new AnyEvent::ForkObject;
+
+    ok $obj, "Constructor";
+
+    kill KILL => $obj->{pid};
+    $obj->do(require => 'Data::Dumper', cb => sub {
+        diag explain \@_ unless  ok $_[0] eq 'fatal', 'Child was killed';
+        $cv->send;
+    });
+
+    my $dont_call_if_destroyed = 1;
+    $obj2->do(require => 'Data::Dumper', cb => sub {
+        diag explain \@_;
+        $dont_call_if_destroyed = 0;
+    });
+    kill KILL => $obj2->{pid};
+    undef $obj2;
+
+    my $timeout; $timeout = AE::timer 1, 0 => sub { undef $timeout; $cv->send };
+
+    $cv->recv;
+
+    ok $dont_call_if_destroyed, "Don't touch callbacks if destroyed";
+    ok $timeout, "Timeout wasn't reached";
 }
 
 

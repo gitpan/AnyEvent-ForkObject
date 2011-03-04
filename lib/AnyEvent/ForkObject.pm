@@ -16,7 +16,7 @@ use AnyEvent::Tools qw(mutex);
 use Devel::GlobalDestruction;
 
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 sub new
 {

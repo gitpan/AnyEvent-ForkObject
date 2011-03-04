@@ -20,3 +20,9 @@ install/libanyevent-forkobject-perl::
 
 clean::
 	rm -f Makefile.old	
+
+tarball: clean
+	rm -f AnyEvent-ForkObject-*
+	cd .. && tar --exclude=.git --exclude=debian -czvf \
+                libanyevent-forkobject-perl_$(DEBVERSION).orig.tar.gz \
+                libanyevent-forkobject-perl-$(DEBVERSION)    

@@ -16,3 +16,6 @@ Revision history for Perl extension AnyEvent::ForkObject.
 
 0.06  Wed Mar  2 14:24:59 MSK 2011
         - destructors work properly
+
+0.07  Fri Mar  4 09:34:26 MSK 2011
+	- test verbose = TRUE

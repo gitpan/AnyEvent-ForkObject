@@ -1,6 +1,11 @@
+libanyevent-forkobject-perl (0.07-1) unstable; urgency=low
+
+  * Enable test verbose mode.
+
+ -- Dmitry E. Oboukhov <unera@debian.org>  Fri, 04 Mar 2011 09:32:44 +0300
+
 libanyevent-forkobject-perl (0.06-1) unstable; urgency=low
 
-  * Initial release. (Closes: #XXXXXX)
-  * 
+  * Initial release. (Closes: #616145)
 
- -- Dmitry E. Oboukhov <unera@debian.org>  Wed, 02 Mar 2011 14:23:44 +0300
+ -- Dmitry E. Oboukhov <unera@debian.org>  Wed, 02 Mar 2011 23:11:48 +0300

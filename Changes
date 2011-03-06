@@ -19,3 +19,6 @@ Revision history for Perl extension AnyEvent::ForkObject.
 
 0.07  Fri Mar  4 09:34:26 MSK 2011
 	- test verbose = TRUE
+
+0.08  Sun Mar  6 11:36:52 MSK 2011
+        - detect if child was killed properly (thanks for CPAN testers report).

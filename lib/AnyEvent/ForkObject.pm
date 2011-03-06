@@ -16,17 +16,18 @@ use AnyEvent::Tools qw(mutex);
 use Devel::GlobalDestruction;
 
 
-our $VERSION = '0.07';
+our $VERSION = '0.08';
 
 sub new
 {
     my ($class) = @_;
 
-    my $self = bless { mutex => mutex  } => ref($class) || $class;
+    my $self = bless { } => ref($class) || $class;
     my ($s1, $s2) = portable_socketpair;
 
     if ($self->{pid} = fork) {
         # parent
+        $self->{mutex} = mutex;
         close $s2;
         fh_nonblocking $s1, 1;
         {
@@ -82,6 +83,7 @@ sub do :method
 
         if ($self->{fatal}) {
             $cb->(fatal => $self->{fatal});
+            delete $self->{cb};
             undef $guard;
             return;
         }
@@ -95,16 +97,22 @@ sub do :method
                 )
             } => sub {
                 return unless $self;
-                goto CHILD_DESTROYED unless $self->{handle};
+                return if $self->{destroyed} or $self->{fatal};
+
                 $self->{handle}->push_write("$_[0]\n");
-                goto CHILD_DESTROYED unless $self->{handle};
+                return unless $self;
+                return if $self->{destroyed} or $self->{fatal};
+
                 $self->{handle}->push_read(line => "\n", sub {
                     deserialize $_[1] => sub {
                         return unless $self;
+                        return if $self->{destroyed} or $self->{fatal};
+
                         my ($o, $error, $tail) = @_;
 
                         if ($error) {
                             $cb->(fatal => $error);
+                            delete $self->{cb};
                             undef $guard;
                             return;
                         }
@@ -133,10 +141,6 @@ sub do :method
                 });
 
                 return;
-                    CHILD_DESTROYED:
-                    $cb->(fatal => 'Child process was destroyed');
-                    undef $guard;
-                    return;
             };
     });
 

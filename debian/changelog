@@ -1,3 +1,9 @@
+libanyevent-forkobject-perl (0.08-1) unstable; urgency=low
+
+  * Fix child status detect, thanks for CPAN testers report.
+
+ -- Dmitry E. Oboukhov <unera@debian.org>  Sun, 06 Mar 2011 11:34:55 +0300
+
 libanyevent-forkobject-perl (0.07-1) unstable; urgency=low
 
   * Enable test verbose mode.

@@ -127,9 +127,14 @@ BEGIN {
     ok $obj, "Constructor";
 
     kill KILL => $obj->{pid};
+    waitpid $obj->{pid}, 0;
     $obj->do(require => 'Data::Dumper', cb => sub {
         diag explain \@_ unless  ok $_[0] eq 'fatal', 'Child was killed';
-        $cv->send;
+        my $t;
+        $t = AE::timer 0.3, 0 => sub {
+            undef $t;
+            $cv->send;
+        }
     });
 
     my $dont_call_if_destroyed = 1;

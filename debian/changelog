@@ -1,3 +1,10 @@
+libanyevent-forkobject-perl (0.09-1) unstable; urgency=low
+
+  * Separate global and usual destructors.
+  * Add watch file.
+
+ -- Dmitry E. Oboukhov <unera@debian.org>  Fri, 29 Jul 2011 15:10:28 +0400
+
 libanyevent-forkobject-perl (0.08-1) unstable; urgency=low
 
   * Fix child status detect, thanks for CPAN testers report.

@@ -16,7 +16,7 @@ use AnyEvent::Tools qw(mutex);
 use Devel::GlobalDestruction;
 
 
-our $VERSION = '0.08';
+our $VERSION = '0.09';
 
 sub new
 {
@@ -295,6 +295,7 @@ sub _start_server
 package AnyEvent::ForkObject::OneObject;
 use Carp;
 use Scalar::Util qw(blessed);
+use Devel::GlobalDestruction;
 
 sub AUTOLOAD
 {
@@ -331,6 +332,7 @@ sub DESTROY
 {
     # You can call DESTROY by hand
     my ($self, $cb) = @_;
+    return if in_global_destruction;
     $cb ||= sub {  };
     my $fo = $self->{fo};
     unless (blessed $$fo) {
